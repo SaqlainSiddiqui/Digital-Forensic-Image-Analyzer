@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Digital Image Forensic Analyzer
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <!-- ===================================================== -->
+    <!-- HEADER -->
+    <!-- ===================================================== -->
+
+    <header class="page-header">
+
+        <h1>
+            Digital Image Forensic Analyzer
+        </h1>
+
+        <p>
+            Analyze digital images for metadata, compression,
+            noise and potential manipulation indicators.
+        </p>
+
+    </header>
+
+
+    <!-- ===================================================== -->
+    <!-- UPLOAD SECTION -->
+    <!-- ===================================================== -->
+
+    <section class="upload-card">
+
+        <h2>
+            Upload Image
+        </h2>
+
+
+        <form
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+            <label for="image">
+                Select an image
+            </label>
+
+
+            <input
+                type="file"
+                id="image"
+                name="image"
+                accept=".jpg,.jpeg,.png,.bmp,.webp"
+                required
+            >
+
+
+            <button
+                type="submit"
+                class="primary-button"
+            >
+                Analyze Image
+            </button>
+
+
+            <div class="upload-help">
+
+                <span>
+                    Supported formats: JPG, JPEG, PNG, BMP, WEBP
+                </span>
+
+                <span>
+                    Maximum size: 10 MB
+                </span>
+
+            </div>
+
+        </form>
+
+    </section>
+
+
+    <!-- ===================================================== -->
+    <!-- ANALYSIS SECTION -->
+    <!-- ===================================================== -->
+
+    {% if image_info %}
+
+    <section class="analysis-section">
+
+        <h2>
+            Image Analysis
+        </h2>
+
+
+        <!-- ================================================= -->
+        <!-- FORENSIC INDICATOR SUMMARY -->
+        <!-- ================================================= -->
+
+        {% if forensic_score %}
+
+        <section class="forensic-score-panel">
+
+            <div class="score-header">
+
+                
+
+                <div>
+
+                    <h3>
+                        Forensic Indicator Summary
+                    </h3>
+
+                    <p>
+                        A transparent heuristic summary of
+                        the available forensic signals.
+                    </p>
+
+                </div>
+
+
+                <div class="score-value">
+
+                    <strong>
+                        {{ forensic_score.score }}
+                    </strong>
+
+                    <span>
+                        / {{ forensic_score.maximum }}
+                    </span>
+
+                </div>
+
+            </div>
+
+            {% if report_url %}
+
+            <div class="report-action">
+
+                <a
+                    href="{{ report_url }}"
+                    class="report-button"
+                    target="_blank"
+                >
+                    Download Forensic Report
+                </a>
+
+            </div>
+
+            {% endif %}
+
+
+            <div class="score-level">
+
+                <strong>
+                    {{ forensic_score.label }}
+                </strong>
+
+                <span>
+                    {{ forensic_score.description }}
+                </span>
+
+            </div>
+
+
+            {% if forensic_score.components %}
+
+            <div class="score-breakdown">
+
+                {% for component in forensic_score.components %}
+
+                <div class="score-component">
+
+                    <div class="component-header">
+
+                        <strong>
+                            {{ component.name }}
+                        </strong>
+
+                        <span>
+                            {{ component.score }}
+                            /
+                            {{ component.maximum }}
+                        </span>
+
+                    </div>
+
+
+                    {% if component.maximum > 0 %}
+
+                    <div class="score-bar">
+                        <div
+                            class="score-bar-fill"
+                            data-width="{{ component.percentage }}"
+                        ></div>
+                    </div>
+
+                    {% endif %}
+
+
+                    <p>
+                        {{ component.status }}
+                    </p>
+
+
+                    {% if component.details %}
+
+                    <ul>
+
+                        {% for detail in component.details %}
+
+                        <li>
+                            {{ detail }}
+                        </li>
+
+                        {% endfor %}
+
+                    </ul>
+
+                    {% endif %}
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+            {% endif %}
+
+
+            <div class="score-disclaimer">
+
+                <strong>
+                    Important forensic note
+                </strong>
+
+                <p>
+                    This score is a heuristic indicator derived
+                    from the application's image-analysis
+                    measurements. It is not a probability that
+                    an image is fake, authentic, or manipulated.
+                </p>
+
+                <p>
+                    Results should be interpreted together with
+                    the original image, metadata, ELA visualization,
+                    noise analysis, histograms and regional analysis.
+                </p>
+
+            </div>
+
+        </section>
+
+        {% endif %}
+
+
+        <!-- ================================================= -->
+        <!-- IMAGE INFORMATION -->
+        <!-- ================================================= -->
+
+        <section class="image-overview">
+
+            <div class="uploaded-image-card">
+
+                <h3>
+                    Uploaded Image
+                </h3>
+
+
+                <div class="image-preview">
+
+                    <img
+                        src="{{ image_info.path }}"
+                        alt="Uploaded image"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="image-info-card">
+
+                <h3>
+                    Image Information
+                </h3>
+
+
+                <div class="info-row">
+
+                    <span>
+                        Filename
+                    </span>
+
+                    <strong>
+                        {{ image_info.filename }}
+                    </strong>
+
+                </div>
+
+
+                <div class="info-row">
+
+                    <span>
+                        Format
+                    </span>
+
+                    <strong>
+                        {{ image_info.format }}
+                    </strong>
+
+                </div>
+
+
+                <div class="info-row">
+
+                    <span>
+                        Width
+                    </span>
+
+                    <strong>
+                        {{ image_info.width }} px
+                    </strong>
+
+                </div>
+
+
+                <div class="info-row">
+
+                    <span>
+                        Height
+                    </span>
+
+                    <strong>
+                        {{ image_info.height }} px
+                    </strong>
+
+                </div>
+
+
+                <div class="info-row">
+
+                    <span>
+                        Color Mode
+                    </span>
+
+                    <strong>
+                        {{ image_info.mode }}
+                    </strong>
+
+                </div>
+
+
+                <div class="info-row">
+
+                    <span>
+                        File Size
+                    </span>
+
+                    <strong>
+                        {{ image_info.file_size }} KB
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- FORENSIC MODULES OVERVIEW -->
+        <!-- ================================================= -->
+
+        <section class="modules-section">
+
+            <h3>
+                Forensic Analysis Modules
+            </h3>
+
+
+            <div class="modules-grid">
+
+                <div class="module-card">
+
+                    <span class="module-number">
+                        01
+                    </span>
+
+                    <strong>
+                        Metadata Analysis
+                    </strong>
+
+                    <p>
+                        EXIF and image metadata.
+                    </p>
+
+                </div>
+
+
+                <div class="module-card">
+
+                    <span class="module-number">
+                        02
+                    </span>
+
+                    <strong>
+                        ELA
+                    </strong>
+
+                    <p>
+                        Error Level Analysis.
+                    </p>
+
+                </div>
+
+
+                <div class="module-card">
+
+                    <span class="module-number">
+                        03
+                    </span>
+
+                    <strong>
+                        Noise Analysis
+                    </strong>
+
+                    <p>
+                        Pixel noise inconsistencies.
+                    </p>
+
+                </div>
+
+
+                <div class="module-card">
+
+                    <span class="module-number">
+                        04
+                    </span>
+
+                    <strong>
+                        Histogram
+                    </strong>
+
+                    <p>
+                        RGB and grayscale analysis.
+                    </p>
+
+                </div>
+
+
+                <div class="module-card">
+
+                    <span class="module-number">
+                        05
+                    </span>
+
+                    <strong>
+                        Statistics
+                    </strong>
+
+                    <p>
+                        Brightness, contrast and entropy.
+                    </p>
+
+                </div>
+
+
+                <div class="module-card">
+
+                    <span class="module-number">
+                        06
+                    </span>
+
+                    <strong>
+                        Suspicious Regions
+                    </strong>
+
+                    <p>
+                        Potentially inconsistent areas.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- METADATA ANALYSIS -->
+        <!-- ================================================= -->
+
+        <section class="metadata-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h3>
+                        Metadata Analysis
+                    </h3>
+
+                    <p class="section-description">
+                        EXIF and embedded metadata extracted
+                        from the uploaded image.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            {% if metadata %}
+
+                {% if metadata.fields %}
+
+                <div class="metadata-table">
+
+                    {% for key, value in metadata.fields.items() %}
+
+                    <div class="metadata-row">
+
+                        <span>
+                            {{ key }}
+                        </span>
+
+                        <strong>
+                            {{ value }}
+                        </strong>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+                {% else %}
+
+                <div class="no-metadata">
+
+                    <p>
+                        No readable EXIF metadata was found.
+                    </p>
+
+                </div>
+
+                {% endif %}
+
+            {% else %}
+
+            <div class="no-metadata">
+
+                <p>
+                    Metadata analysis was not available.
+                </p>
+
+            </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- ELA -->
+        <!-- ================================================= -->
+
+        <section class="ela-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h3>
+                        Error Level Analysis
+                    </h3>
+
+                    <p class="section-description">
+                        ELA compares the image with a controlled
+                        JPEG recompression to visualize differences
+                        in compression behavior.
+                    </p>
+
+                </div>
+
+
+                {% if ela and ela.success %}
+
+                <span class="status-badge found">
+                    Analysis Complete
+                </span>
+
+                {% else %}
+
+                <span class="status-badge not-found">
+                    Analysis Failed
+                </span>
+
+                {% endif %}
+
+            </div>
+
+
+            {% if ela and ela.success %}
+
+            <div class="ela-grid">
+
+                <div class="ela-image-card">
+
+                    <h4>
+                        ELA Visualization
+                    </h4>
+
+
+                    <img
+                        src="{{ ela.path }}"
+                        alt="ELA visualization"
+                        class="ela-image"
+                    >
+
+
+                    <p class="image-note">
+                        Brighter areas indicate larger
+                        differences after recompression.
+                    </p>
+
+                </div>
+
+
+                <div class="ela-information">
+
+                    <h4>
+                        ELA Statistics
+                    </h4>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            Analysis Width
+                        </span>
+
+                        <strong>
+                            {{ ela.width }} px
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            Analysis Height
+                        </span>
+
+                        <strong>
+                            {{ ela.height }} px
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            JPEG Quality
+                        </span>
+
+                        <strong>
+                            {{ ela.jpeg_quality }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            Maximum Difference
+                        </span>
+
+                        <strong>
+                            {{ ela.maximum_difference }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            Average Difference
+                        </span>
+
+                        <strong>
+                            {{ ela.average_difference }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="ela-note">
+
+                        <strong>
+                            Interpretation
+                        </strong>
+
+                        <p>
+                            ELA highlights regions that respond
+                            differently to JPEG recompression.
+                            Such differences can have many causes,
+                            including image content, compression
+                            history and editing.
+                        </p>
+
+                        <p>
+                            Therefore, ELA should not be treated
+                            as conclusive proof of image manipulation.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% else %}
+
+            <div class="no-metadata">
+
+                <p>
+                    ELA could not be generated.
+                </p>
+
+                {% if ela and ela.error %}
+
+                <small>
+                    Error: {{ ela.error }}
+                </small>
+
+                {% endif %}
+
+            </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- NOISE ANALYSIS -->
+        <!-- ================================================= -->
+
+        <section class="noise-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h3>
+                        Noise Analysis
+                    </h3>
+
+                    <p class="section-description">
+                        The noise map visualizes local
+                        high-frequency pixel variations
+                        within the image.
+                    </p>
+
+                </div>
+
+
+                {% if noise and noise.success %}
+
+                <span class="status-badge found">
+                    Analysis Complete
+                </span>
+
+                {% else %}
+
+                <span class="status-badge not-found">
+                    Analysis Failed
+                </span>
+
+                {% endif %}
+
+            </div>
+
+
+            {% if noise and noise.success %}
+
+            <div class="ela-grid">
+
+                <div class="ela-image-card">
+
+                    <h4>
+                        Noise Map
+                    </h4>
+
+
+                    <img
+                        src="{{ noise.path }}"
+                        alt="Image noise analysis"
+                        class="ela-image"
+                    >
+
+
+                    <p class="image-note">
+                        Brighter/color-intense areas represent
+                        stronger local high-frequency variation.
+                    </p>
+
+                </div>
+
+
+                <div class="ela-information">
+
+                    <h4>
+                        Noise Statistics
+                    </h4>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            Analysis Width
+                        </span>
+
+                        <strong>
+                            {{ noise.width }} px
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            Analysis Height
+                        </span>
+
+                        <strong>
+                            {{ noise.height }} px
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            Mean Noise
+                        </span>
+
+                        <strong>
+                            {{ noise.mean }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            Noise Standard Deviation
+                        </span>
+
+                        <strong>
+                            {{ noise.standard_deviation }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            Maximum Noise
+                        </span>
+
+                        <strong>
+                            {{ noise.maximum }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="ela-note">
+
+                        <strong>
+                            Interpretation
+                        </strong>
+
+                        <p>
+                            Noise variation can differ across
+                            image regions because of texture,
+                            edges, lighting, camera processing
+                            and compression.
+                        </p>
+
+                        <p>
+                            Unusual noise patterns may be useful
+                            as one forensic indicator, but noise
+                            analysis alone cannot establish that
+                            an image was manipulated.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% else %}
+
+            <div class="no-metadata">
+
+                <p>
+                    Noise analysis could not be generated.
+                </p>
+
+                {% if noise and noise.error %}
+
+                <small>
+                    Error: {{ noise.error }}
+                </small>
+
+                {% endif %}
+
+            </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- IMAGE STATISTICS -->
+        <!-- ================================================= -->
+
+        <section class="statistics-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h3>
+                        Image Statistics
+                    </h3>
+
+                    <p class="section-description">
+                        Quantitative measurements of the image's
+                        pixel distribution and visual characteristics.
+                    </p>
+
+                </div>
+
+
+                {% if statistics and statistics.success %}
+
+                <span class="status-badge found">
+                    Analysis Complete
+                </span>
+
+                {% else %}
+
+                <span class="status-badge not-found">
+                    Analysis Failed
+                </span>
+
+                {% endif %}
+
+            </div>
+
+
+            {% if statistics and statistics.success %}
+
+            <div class="statistics-grid">
+
+                <div class="stat-card">
+
+                    <span>
+                        Brightness
+                    </span>
+
+                    <strong>
+                        {{ statistics.brightness }}
+                    </strong>
+
+                    <small>
+                        Mean grayscale intensity
+                    </small>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        Contrast
+                    </span>
+
+                    <strong>
+                        {{ statistics.contrast }}
+                    </strong>
+
+                    <small>
+                        Intensity standard deviation
+                    </small>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        Mean Intensity
+                    </span>
+
+                    <strong>
+                        {{ statistics.mean_intensity }}
+                    </strong>
+
+                    <small>
+                        Average pixel intensity
+                    </small>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        Standard Deviation
+                    </span>
+
+                    <strong>
+                        {{ statistics.standard_deviation }}
+                    </strong>
+
+                    <small>
+                        Pixel variation
+                    </small>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        Minimum Intensity
+                    </span>
+
+                    <strong>
+                        {{ statistics.minimum_intensity }}
+                    </strong>
+
+                    <small>
+                        Darkest pixel value
+                    </small>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        Maximum Intensity
+                    </span>
+
+                    <strong>
+                        {{ statistics.maximum_intensity }}
+                    </strong>
+
+                    <small>
+                        Brightest pixel value
+                    </small>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        Entropy
+                    </span>
+
+                    <strong>
+                        {{ statistics.entropy }}
+                    </strong>
+
+                    <small>
+                        Pixel information measure
+                    </small>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        Analysis Resolution
+                    </span>
+
+                    <strong>
+                        {{ statistics.width }} ×
+                        {{ statistics.height }}
+                    </strong>
+
+                    <small>
+                        Working resolution
+                    </small>
+
+                </div>
+
+            </div>
+
+            {% else %}
+
+            <div class="no-metadata">
+
+                <p>
+                    Image statistics could not be calculated.
+                </p>
+
+                {% if statistics and statistics.error %}
+
+                <small>
+                    Error: {{ statistics.error }}
+                </small>
+
+                {% endif %}
+
+            </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- HISTOGRAM ANALYSIS -->
+        <!-- ================================================= -->
+
+        <section class="histogram-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h3>
+                        Histogram Analysis
+                    </h3>
+
+                    <p class="section-description">
+                        Visual representation of pixel intensity
+                        distribution across the image.
+                    </p>
+
+                </div>
+
+
+                {% if histogram and histogram.success %}
+
+                <span class="status-badge found">
+                    Analysis Complete
+                </span>
+
+                {% else %}
+
+                <span class="status-badge not-found">
+                    Analysis Failed
+                </span>
+
+                {% endif %}
+
+            </div>
+
+
+            {% if histogram and histogram.success %}
+
+            <div class="histogram-grid">
+
+                <div class="histogram-card">
+
+                    <h4>
+                        RGB Histogram
+                    </h4>
+
+                    <img
+                        src="{{ histogram.rgb_path }}"
+                        alt="RGB histogram"
+                    >
+
+                </div>
+
+
+                <div class="histogram-card">
+
+                    <h4>
+                        Grayscale Histogram
+                    </h4>
+
+                    <img
+                        src="{{ histogram.grayscale_path }}"
+                        alt="Grayscale histogram"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="histogram-note">
+
+                <strong>
+                    Interpretation
+                </strong>
+
+                <p>
+                    Histograms show how pixel intensities are
+                    distributed across the image. They can help
+                    identify exposure characteristics, contrast,
+                    clipping and unusual tonal distributions.
+                </p>
+
+                <p>
+                    Histogram analysis alone does not establish
+                    whether an image has been manipulated.
+                </p>
+
+            </div>
+
+            {% else %}
+
+            <div class="no-metadata">
+
+                <p>
+                    Histogram analysis could not be generated.
+                </p>
+
+                {% if histogram and histogram.error %}
+
+                <small>
+                    Error: {{ histogram.error }}
+                </small>
+
+                {% endif %}
+
+            </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- SUSPICIOUS REGIONS -->
+        <!-- ================================================= -->
+
+        <section class="suspicious-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h3>
+                        Potentially Inconsistent Regions
+                    </h3>
+
+                    <p class="section-description">
+                        A heuristic heatmap combining local
+                        variation, high-frequency residuals
+                        and edge response.
+                    </p>
+
+                </div>
+
+
+                {% if suspicious and suspicious.success %}
+
+                <span class="status-badge found">
+                    Analysis Complete
+                </span>
+
+                {% else %}
+
+                <span class="status-badge not-found">
+                    Analysis Failed
+                </span>
+
+                {% endif %}
+
+            </div>
+
+
+            {% if suspicious and suspicious.success %}
+
+            <div class="suspicious-summary">
+
+                <div class="summary-card">
+
+                    <span>
+                        Detected Regions
+                    </span>
+
+                    <strong>
+                        {{ suspicious.region_count }}
+                    </strong>
+
+                </div>
+
+
+                <div class="summary-card">
+
+                    <span>
+                        Indicator Value
+                    </span>
+
+                    <strong>
+                        {{ suspicious.indicator }}
+                    </strong>
+
+                    <small>
+                        Heuristic indicator / 100
+                    </small>
+
+                </div>
+
+
+                <div class="summary-card">
+
+                    <span>
+                        Detection Threshold
+                    </span>
+
+                    <strong>
+                        {{ suspicious.threshold }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="suspicious-image-grid">
+
+                <div class="suspicious-image-card">
+
+                    <h4>
+                        Heatmap
+                    </h4>
+
+                    <img
+                        src="{{ suspicious.heatmap_path }}"
+                        alt="Potential inconsistency heatmap"
+                    >
+
+                    <p>
+                        Higher-intensity areas represent stronger
+                        responses from the combined analysis.
+                    </p>
+
+                </div>
+
+
+                <div class="suspicious-image-card">
+
+                    <h4>
+                        Detected Region Overlay
+                    </h4>
+
+                    <img
+                        src="{{ suspicious.overlay_path }}"
+                        alt="Potentially inconsistent region overlay"
+                    >
+
+                    <p>
+                        Bounding boxes identify the highest-response
+                        regions selected by the heuristic detector.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="region-list">
+
+                <h4>
+                    Region Details
+                </h4>
+
+
+                {% if suspicious.regions %}
+
+                    {% for region in suspicious.regions %}
+
+                    <div class="region-row">
+
+                        <div>
+
+                            <strong>
+                                Region {{ loop.index }}
+                            </strong>
+
+                            <span>
+                                X: {{ region.x }}
+                                ·
+                                Y: {{ region.y }}
+                            </span>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                {{ region.width }}
+                                ×
+                                {{ region.height }}
+                                px
+                            </span>
+
+                            <strong>
+                                {{ region.area_percentage }}%
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <p class="no-region-message">
+                        No regions exceeded the selected
+                        high-response threshold.
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="forensic-disclaimer">
+
+                <strong>
+                    How to interpret this result
+                </strong>
+
+                <p>
+                    This analysis identifies regions with unusual
+                    combinations of local pixel variation,
+                    high-frequency residuals and edge response.
+                </p>
+
+                <p>
+                    A detected region is not proof of image
+                    manipulation. Natural textures, object edges,
+                    sharpening, lighting, compression and other
+                    image characteristics can also produce strong
+                    responses.
+                </p>
+
+            </div>
+
+            {% else %}
+
+            <div class="no-metadata">
+
+                <p>
+                    Potentially inconsistent region analysis
+                    could not be generated.
+                </p>
+
+                {% if suspicious and suspicious.error %}
+
+                <small>
+                    Error: {{ suspicious.error }}
+                </small>
+
+                {% endif %}
+
+            </div>
+
+            {% endif %}
+
+        </section>
+
+
+    </section>
+
+    {% else %}
+
+    <!-- ===================================================== -->
+    <!-- EMPTY STATE -->
+    <!-- ===================================================== -->
+
+    <section class="empty-state">
+
+        <h2>
+            Image Analysis
+        </h2>
+
+        <p>
+            Upload an image above to begin forensic analysis.
+        </p>
+
+    </section>
+
+    {% endif %}
+
+
+</div>
+<script>
+    document.querySelectorAll(".score-bar-fill").forEach(function (bar) {
+
+        const percentage = bar.dataset.width;
+
+        bar.style.width = percentage + "%";
+
+    });
+</script>
+
+</body>
+
+
+</html>
